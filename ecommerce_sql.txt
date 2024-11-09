@@ -1,0 +1,229 @@
+mysql> CREATE DATABASE ecommerce;
+Query OK, 1 row affected (0.01 sec)
+
+mysql> USE ecommerce;
+Database changed
+
+// Table creation //
+
+1.customers
+2.orders
+3.products
+
+mysql> CREATE TABLE customers (
+    ->     id INT AUTO_INCREMENT PRIMARY KEY,
+    ->     name VARCHAR(100),
+    ->     email VARCHAR(100) UNIQUE,
+    ->     address VARCHAR(255)
+    -> );
+Query OK, 0 rows affected (0.08 sec)
+
+mysql> CREATE TABLE orders (
+    ->     id INT AUTO_INCREMENT PRIMARY KEY,
+    ->     customer_id INT,
+    ->     order_date DATE,
+    ->     total_amount DECIMAL(10, 2),
+    ->     FOREIGN KEY (customer_id) REFERENCES customers(id)
+    -> );
+Query OK, 0 rows affected (0.04 sec)
+
+mysql> CREATE TABLE products (
+    ->     id INT AUTO_INCREMENT PRIMARY KEY,
+    ->     name VARCHAR(100),
+    ->     price DECIMAL(10, 2),
+    ->     description TEXT
+    -> );
+Query OK, 0 rows affected (0.02 sec)
+
+// Data insertion //
+
+mysql> INSERT INTO customers (name, email, address)
+    -> VALUES
+    -> ('John Doe', 'john@example.com', '123 Main St'),
+    -> ('Jane Smith', 'jane@example.com', '456 Oak St'),
+    -> ('Alice Johnson', 'alice@example.com', '789 Pine St'),
+    -> ('Bob Brown', 'bob@example.com', '101 Maple St'),
+    -> ('Charlie Davis', 'charlie@example.com', '202 Birch St'),
+    -> ('Diana Green', 'diana@example.com', '303 Cedar St'),
+    -> ('Eva White', 'eva@example.com', '404 Elm St'),
+    -> ('Frank Black', 'frank@example.com', '505 Willow St'),
+    -> ('Grace Blue', 'grace@example.com', '606 Chestnut St'),
+    -> ('Hank Red', 'hank@example.com', '707 Aspen St');
+Query OK, 10 rows affected (0.01 sec)
+Records: 10  Duplicates: 0  Warnings: 0
+
+mysql> INSERT INTO products (name, price, description)
+    -> VALUES
+    -> ('Product A', 30.00, 'Description for Product A'),
+    -> ('Product B', 25.00, 'Description for Product B'),
+    -> ('Product C', 40.00, 'Description for Product C'),
+    -> ('Product D', 15.00, 'Description for Product D'),
+    -> ('Product E', 20.00, 'Description for Product E'),
+    -> ('Product F', 50.00, 'Description for Product F'),
+    -> ('Product G', 35.00, 'Description for Product G'),
+    -> ('Product H', 45.00, 'Description for Product H'),
+    -> ('Product I', 60.00, 'Description for Product I'),
+    -> ('Product J', 10.00, 'Description for Product J');
+Query OK, 10 rows affected (0.01 sec)
+Records: 10  Duplicates: 0  Warnings: 0
+
+mysql> INSERT INTO orders (customer_id, order_date, total_amount)
+    -> VALUES
+    -> (1, '2024-10-10', 100.00),
+    -> (2, '2024-10-05', 150.00),
+    -> (3, '2024-10-25', 200.00),
+    -> (4, '2024-09-20', 130.00),
+    -> (5, '2024-09-15', 175.00),
+    -> (6, '2024-10-12', 50.00),
+    -> (7, '2024-10-18', 180.00),
+    -> (8, '2024-09-30', 90.00),
+    -> (9, '2024-10-28', 220.00),
+    -> (10, '2024-09-22', 80.00);
+Query OK, 10 rows affected (0.01 sec)
+Records: 10  Duplicates: 0  Warnings: 0
+
+
+//.....Queries.....//
+
+// Query 1: Retrieve all customers who have placed an order in the last 30 days
+
+mysql> SELECT DISTINCT c.name, c.email, c.address
+    -> FROM customers c
+    -> JOIN orders o ON c.id = o.customer_id
+    -> WHERE o.order_date >= CURDATE() - INTERVAL 30 DAY;
++---------------+-------------------+-----------------+
+| name          | email             | address         |
++---------------+-------------------+-----------------+
+| John Doe      | john@example.com  | 123 Main St     |
+| Alice Johnson | alice@example.com | 789 Pine St     |
+| Diana Green   | diana@example.com | 303 Cedar St    |
+| Eva White     | eva@example.com   | 404 Elm St      |
+| Grace Blue    | grace@example.com | 606 Chestnut St |
++---------------+-------------------+-----------------+
+5 rows in set (0.02 sec)
+
+// Query 2: Get the total amount of all orders placed by each customer.
+
+mysql> SELECT c.name, SUM(o.total_amount) AS total_spent
+    -> FROM customers c
+    -> JOIN orders o ON c.id = o.customer_id
+    -> GROUP BY c.id;
++---------------+-------------+
+| name          | total_spent |
++---------------+-------------+
+| John Doe      |      100.00 |
+| Jane Smith    |      150.00 |
+| Alice Johnson |      200.00 |
+| Bob Brown     |      130.00 |
+| Charlie Davis |      175.00 |
+| Diana Green   |       50.00 |
+| Eva White     |      180.00 |
+| Frank Black   |       90.00 |
+| Grace Blue    |      220.00 |
+| Hank Red      |       80.00 |
++---------------+-------------+
+10 rows in set (0.01 sec)
+
+// Query 3: Update the price of Product C to 45.00
+
+mysql> UPDATE products
+    -> SET price = 45.00
+    -> WHERE name = 'Product C';
+Query OK, 1 row affected (0.01 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+// Query 4: Add a new column discount to the products table
+
+mysql> ALTER TABLE products
+    -> ADD COLUMN discount DECIMAL(5, 2);
+Query OK, 0 rows affected (0.02 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+// Query 5: Retrieve the top 3 products with the highest price
+
+mysql> SELECT name, price
+    -> FROM products
+    -> ORDER BY price DESC
+    -> LIMIT 3;
++-----------+-------+
+| name      | price |
++-----------+-------+
+| Product I | 60.00 |
+| Product F | 50.00 |
+| Product C | 45.00 |
++-----------+-------+
+3 rows in set (0.00 sec)
+
+// Query 6: Get the names of customers who have ordered Product A
+
+mysql> SELECT DISTINCT customers.name
+    -> FROM customers
+    -> JOIN orders ON customers.id = orders.customer_id
+    -> JOIN products ON orders.id = products.id
+    -> WHERE products.name = 'Product A';
++----------+
+| name     |
++----------+
+| John Doe |
++----------+
+1 row in set (0.00 sec)
+
+// Query 7: Join the orders and customers tables to retrieve the customer's name and order date for each order
+
+mysql> SELECT c.name, o.order_date
+    -> FROM customers c
+    -> JOIN orders o ON c.id = o.customer_id;
++---------------+------------+
+| name          | order_date |
++---------------+------------+
+| John Doe      | 2024-10-10 |
+| Jane Smith    | 2024-10-05 |
+| Alice Johnson | 2024-10-25 |
+| Bob Brown     | 2024-09-20 |
+| Charlie Davis | 2024-09-15 |
+| Diana Green   | 2024-10-12 |
+| Eva White     | 2024-10-18 |
+| Frank Black   | 2024-09-30 |
+| Grace Blue    | 2024-10-28 |
+| Hank Red      | 2024-09-22 |
++---------------+------------+
+10 rows in set (0.00 sec)
+
+// Query 8: Retrieve the orders with a total amount greater than 150.00
+
+mysql> SELECT * FROM orders
+    -> WHERE total_amount > 150.00;
++----+-------------+------------+--------------+
+| id | customer_id | order_date | total_amount |
++----+-------------+------------+--------------+
+|  3 |           3 | 2024-10-25 |       200.00 |
+|  5 |           5 | 2024-09-15 |       175.00 |
+|  7 |           7 | 2024-10-18 |       180.00 |
+|  9 |           9 | 2024-10-28 |       220.00 |
++----+-------------+------------+--------------+
+4 rows in set (0.00 sec)
+
+// Query 9: Normalize the database by creating a separate table for order items
+
+mysql> CREATE TABLE order_items (
+    ->     id INT AUTO_INCREMENT PRIMARY KEY,
+    ->     order_id INT,
+    ->     product_id INT,
+    ->     quantity INT,
+    ->     price DECIMAL(10, 2),
+    ->     FOREIGN KEY (order_id) REFERENCES orders(id),
+    ->     FOREIGN KEY (product_id) REFERENCES products(id)
+    -> );
+Query OK, 0 rows affected (0.08 sec)
+
+// Query 10: Retrieve the average total of all orders
+
+mysql> SELECT AVG(total_amount) AS average_order_total
+    -> FROM orders;
++---------------------+
+| average_order_total |
++---------------------+
+|          137.500000 |
++---------------------+
+1 row in set (0.01 sec)
+
